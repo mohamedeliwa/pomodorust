@@ -1,5 +1,6 @@
 [package]
-name = "pomodoro"
+name = "pomodust"
+description = "A simple CLI pomodoro timer."
 version = "0.1.0"
 edition = "2021"
 
