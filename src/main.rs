@@ -1,19 +1,22 @@
+use clap::Parser;
 use std::{
-    env::args,
     io::{self, Write},
     println, thread,
     time::Duration,
 };
 
-#[derive(Debug)]
+#[derive(Parser, Debug)]
 struct Pomodoro {
+    /// How many minutes in a session
+    #[arg(short, long, default_value_t = 1)]
     session: u64,
+    /// How many minutes in a break
+    #[arg(short, long, default_value_t = 1)]
     pause: u64,
 }
 
 fn main() {
-    let (session, pause) = args_formatter(args().skip(1).collect());
-    let pomodoro = Pomodoro { session, pause };
+    let pomodoro = Pomodoro::parse();
 
     println!("Start session ?\n");
     let answer = bool_answer_formatter();
@@ -31,19 +34,6 @@ fn main() {
     println!("\nBreak has started!");
     runner(pomodoro.pause);
     println!("Break ended!")
-}
-
-/**
-* extracts session and pause values from user args
-*/
-fn args_formatter(args: Vec<String>) -> (u64, u64) {
-    if args.len() < 2 {
-        return (1, 1);
-    }
-    (
-        u64::from_str_radix(&args[0], 10).unwrap_or(1),
-        u64::from_str_radix(&args[1], 10).unwrap_or(1),
-    )
 }
 
 /**
