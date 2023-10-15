@@ -1,0 +1,5 @@
+- [x] build the basic functionality.
+- [x] add notifcations functionality.
+- [ ] make the counter output a digital timer that counts down `in progress...`
+- [ ] add the feature to pause/resume the timer
+- [ ] make the app run inifite cycles of sessions and breaks until the user stops/pauses it.
