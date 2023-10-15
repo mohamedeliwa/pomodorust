@@ -1,4 +1,5 @@
 use clap::Parser;
+use notify_rust::{Hint, Notification};
 use std::{
     io::{self, Write},
     println, thread,
@@ -18,21 +19,30 @@ struct Pomodoro {
 fn main() {
     let pomodoro = Pomodoro::parse();
 
-    println!("Start session ?\n");
+    println!("Start session ? (yes = y, no = n)\n");
     let answer = bool_answer_formatter();
     if !answer {
         return;
     };
-    println!("Session has started!");
     runner(pomodoro.session);
-    println!("Session ended!");
-    println!("Start break ?\n");
+    Notification::new()
+        .summary("Pomodoro")
+        .body("Session has ended!")
+        .hint(Hint::SoundName(String::from("alarm-clock-elapsed")))
+        .show()
+        .expect("showing notification error!");
+    println!("Start break ? (yes = y, no = n)\n");
     let answer = bool_answer_formatter();
     if !answer {
         return;
     };
-    println!("\nBreak has started!");
     runner(pomodoro.pause);
+    Notification::new()
+        .summary("Pomodoro")
+        .body("Break has ended!")
+        .hint(Hint::SoundName(String::from("alarm-clock-elapsed")))
+        .show()
+        .expect("showing notification error!");
     println!("Break ended!")
 }
 
