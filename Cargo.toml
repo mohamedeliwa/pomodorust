@@ -9,3 +9,6 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.4.6", features = ["derive"] }
 notify-rust = "4"
+console = "0.15.7"
+dialoguer = "0.11.0"
+indicatif = "0.17.7"
