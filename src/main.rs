@@ -43,7 +43,6 @@ fn main() {
         .hint(Hint::SoundName(String::from("alarm-clock-elapsed")))
         .show()
         .expect("showing notification error!");
-    println!("Break ended!")
 }
 
 /**
