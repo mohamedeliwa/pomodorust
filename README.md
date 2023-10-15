@@ -1,2 +1,2 @@
 # Pomodorust
-A simple CLI pomodoro timer for Mac and Linux
+A simple CLI pomodoro timer built in rust.
