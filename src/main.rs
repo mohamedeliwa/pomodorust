@@ -3,11 +3,7 @@ use console;
 use dialoguer;
 use indicatif;
 use notify_rust::{Hint, Notification};
-use std::{
-    io::{self, Write},
-    println, thread,
-    time::Duration,
-};
+use std::{io, println, thread, time::Duration};
 
 #[derive(Parser, Debug)]
 struct Pomodoro {
@@ -71,12 +67,12 @@ fn runner(minutes: u64) {
 
     let thread_join_handle = thread::spawn(move || {
         let bar = indicatif::ProgressBar::new(seconds);
+        bar.set_style(indicatif::ProgressStyle::with_template("[{elapsed_precise}]").unwrap());
         for _ in 0..seconds {
-            thread::sleep(Duration::from_secs(1));
             bar.inc(1);
+            thread::sleep(Duration::from_secs(1));
         }
         bar.finish();
     });
-    thread::sleep(Duration::from_secs(seconds));
     let _res = thread_join_handle.join();
 }
