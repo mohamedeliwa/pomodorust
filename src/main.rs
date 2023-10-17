@@ -1,9 +1,9 @@
 use clap::Parser;
-use console;
+// use console;
 use dialoguer;
 use indicatif;
 use notify_rust::{Hint, Notification};
-use std::{io, println, thread, time::Duration};
+use std::{thread, time::Duration};
 
 #[derive(Parser, Debug)]
 struct Pomodoro {
@@ -18,11 +18,13 @@ struct Pomodoro {
 fn main() {
     let pomodoro = Pomodoro::parse();
 
-    println!("Start session ? (yes = y, no = n)\n");
-    let answer = bool_answer_formatter();
-    if !answer {
+    let confirmation = dialoguer::Confirm::new()
+        .with_prompt("Start a session?")
+        .interact()
+        .unwrap();
+    if !confirmation {
         return;
-    };
+    }
     runner(pomodoro.session);
     Notification::new()
         .summary("Pomodoro")
@@ -30,11 +32,13 @@ fn main() {
         .hint(Hint::SoundName(String::from("alarm-clock-elapsed")))
         .show()
         .expect("showing notification error!");
-    println!("Start break ? (yes = y, no = n)\n");
-    let answer = bool_answer_formatter();
-    if !answer {
+    let confirmation = dialoguer::Confirm::new()
+        .with_prompt("Start a break?")
+        .interact()
+        .unwrap();
+    if !confirmation {
         return;
-    };
+    }
     runner(pomodoro.pause);
     Notification::new()
         .summary("Pomodoro")
@@ -42,20 +46,6 @@ fn main() {
         .hint(Hint::SoundName(String::from("alarm-clock-elapsed")))
         .show()
         .expect("showing notification error!");
-}
-
-/**
-* formats user's answer for yes or no questions
-*/
-fn bool_answer_formatter() -> bool {
-    let mut answer = String::new();
-    let yes = String::from("y\n");
-    io::stdin().read_line(&mut answer).unwrap();
-    if answer == yes {
-        true
-    } else {
-        false
-    }
 }
 
 /**
