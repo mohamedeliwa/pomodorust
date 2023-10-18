@@ -2,7 +2,7 @@ use clap::Parser;
 // use console;
 use dialoguer;
 use indicatif;
-use notify_rust::{Hint, Notification};
+use notify_rust::Notification;
 use std::{thread, time::Duration};
 
 enum Period {
@@ -48,7 +48,7 @@ impl Pomodoro {
         Notification::new()
             .summary("Pomodoro")
             .body(msg)
-            .hint(Hint::SoundName(String::from("alarm-clock-elapsed")))
+            .sound_name("alarm-clock-elapsed")
             .show()
             .expect("showing notification error!");
     }
