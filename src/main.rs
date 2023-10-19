@@ -27,7 +27,6 @@ fn main() {
         return;
     }
     pomodoro.run();
-    pomodoro.notify("Session has ended!");
     let confirmation = dialoguer::Confirm::new()
         .with_prompt("Start a break?")
         .interact()
@@ -36,5 +35,4 @@ fn main() {
         return;
     }
     pomodoro.run();
-    pomodoro.notify("Break has ended!");
 }
