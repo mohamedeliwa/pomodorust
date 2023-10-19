@@ -3,17 +3,27 @@ use indicatif;
 use notify_rust::Notification;
 use std::{thread, time::Duration};
 
-pub enum Period {
+enum Period {
     Session,
     Pause,
 }
 pub struct Pomodoro {
-    pub session: u64,
-    pub pause: u64,
-    pub next: Period,
+    session: u64,
+    pause: u64,
+    next: Period,
 }
 
 impl Pomodoro {
+    /**
+     * creates a new instance of the Pomodoro struct and initializes its state
+     */
+    pub fn new(session: u64, pause: u64) -> Pomodoro {
+        Pomodoro {
+            session,
+            pause,
+            next: Period::Session,
+        }
+    }
     /**
      * runs a specific period of minutes
      * prints passed time indicators to stdout

@@ -2,7 +2,6 @@ use clap::Parser;
 use dialoguer;
 
 mod pomodoro;
-use pomodoro::Period;
 use pomodoro::Pomodoro;
 
 #[derive(Parser, Debug)]
@@ -18,11 +17,7 @@ struct Args {
 fn main() {
     let pomodoro = Args::parse();
 
-    let mut pomodoro = Pomodoro {
-        session: pomodoro.session,
-        pause: pomodoro.pause,
-        next: Period::Session,
-    };
+    let mut pomodoro = Pomodoro::new(pomodoro.session, pomodoro.pause);
 
     let confirmation = dialoguer::Confirm::new()
         .with_prompt("Start a session?")
