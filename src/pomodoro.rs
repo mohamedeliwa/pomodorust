@@ -43,12 +43,13 @@ impl Pomodoro {
             }
             bar.finish();
         });
+
+        let _res = thread_join_handle.join();
+        self.notify();
         self.next = match self.next {
             Period::Session => Period::Pause,
             Period::Pause => Period::Session,
         };
-        self.notify();
-        let _res = thread_join_handle.join();
     }
     /***
      * notifies the user that a period is elapsed
