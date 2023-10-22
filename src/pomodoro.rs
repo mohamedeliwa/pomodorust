@@ -2,8 +2,10 @@
 use indicatif::{ProgressBar, ProgressStyle};
 use notify_rust::Notification;
 use std::{
-    println,
-    // sync::mpsc::{self, Receiver, Sender},
+    sync::{
+        mpsc::{self, Receiver, Sender},
+        Arc,
+    },
     thread,
     time::Duration,
 };
@@ -22,8 +24,8 @@ pub struct Pomodoro {
     pause: u64,
     next: Period,
     bar: Option<ProgressBar>,
-    // tx: Option<Sender<Action>>,
-    // rx: Option<Receiver<Action>>,
+    tx: Arc<Sender<Action>>,
+    rx: Arc<Receiver<Action>>,
 }
 
 impl Pomodoro {
@@ -31,14 +33,14 @@ impl Pomodoro {
      * creates a new instance of the Pomodoro struct and initializes its state
      */
     pub fn new(session: u64, pause: u64) -> Pomodoro {
-        // let (tx, rx) = mpsc::channel::<Action>();
+        let (tx, rx) = mpsc::channel::<Action>();
         Pomodoro {
             session,
             pause,
             next: Period::Session,
             bar: None,
-            // tx: Some(tx),
-            // rx: Some(rx),
+            tx: Arc::new(tx),
+            rx: Arc::new(rx),
         }
     }
     /**
