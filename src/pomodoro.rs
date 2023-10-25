@@ -1,115 +1,118 @@
-// use console;
+use std::{sync::mpsc::Receiver, thread, time::Duration};
+
 use indicatif::{ProgressBar, ProgressStyle};
 use notify_rust::Notification;
-use std::{
-    sync::{
-        mpsc::{self, Receiver, Sender},
-        Arc,
-    },
-    thread,
-    time::Duration,
-};
 
-// enum Action {
-//     Resume,
-//     Puase,
-// }
-enum Period {
+#[derive(Debug)]
+enum Interval {
     Session,
     Pause,
 }
 
+pub enum Actions {
+    Puase,
+    Resume,
+}
+
+#[derive(Debug)]
 pub struct Pomodoro {
-    session: u64,
-    pause: u64,
-    next: Period,
+    session_length: u64,
+    pause_length: u64,
+    next_interval: Interval,
     bar: Option<ProgressBar>,
-    tx: Arc<Sender<Action>>,
-    rx: Arc<Receiver<Action>>,
+    rx: Receiver<Actions>,
 }
 
 impl Pomodoro {
-    /**
-     * creates a new instance of the Pomodoro struct and initializes its state
-     */
-    pub fn new(session: u64, pause: u64) -> Pomodoro {
-        let (tx, rx) = mpsc::channel::<Action>();
+    pub fn new(session_length: u64, pause_length: u64, rx: Receiver<Actions>) -> Pomodoro {
         Pomodoro {
-            session,
-            pause,
-            next: Period::Session,
+            session_length,
+            pause_length,
+            next_interval: Interval::Session,
             bar: None,
-            tx: Arc::new(tx),
-            rx: Arc::new(rx),
+            rx,
         }
     }
-    /**
-     * runs a specific period of minutes
-     * prints passed time indicators to stdout
-     */
-    pub fn run(&mut self) {
-        if self.bar.is_none() {
-            match self.next {
-                Period::Session => {
-                    let bar = ProgressBar::new(self.session * 60);
-                    bar.set_style(ProgressStyle::with_template("[{elapsed_precise}]").unwrap());
-                    self.bar = Some(bar)
-                }
-                Period::Pause => {
-                    let bar = ProgressBar::new(self.pause * 60);
-                    bar.set_style(ProgressStyle::with_template("[{elapsed_precise}]").unwrap());
-                    self.bar = Some(bar)
-                }
-            }
-        };
-        let bar = self.bar.as_ref().expect("couldn't get self.bar ref");
-        let position = bar.position();
-        let length = bar.length().expect("failed to get bar length!");
-        for _ in position..length {
-            bar.inc(1);
-            thread::sleep(Duration::from_secs(1));
-        }
 
-        self.notify();
-        bar.finish();
-        self.next = match self.next {
-            Period::Session => {
-                self.bar.take();
-                Period::Pause
+    fn create_bar(&mut self) -> () {
+        let (name, length) = match self.next_interval {
+            Interval::Session => {
+                self.next_interval = Interval::Pause;
+                ("Session", self.session_length * 60)
             }
-            Period::Pause => {
-                self.bar.take();
-                Period::Session
+            Interval::Pause => {
+                self.next_interval = Interval::Session;
+                ("Pause", self.pause_length * 60)
             }
         };
+        let bar = ProgressBar::new(length).with_prefix(format!("{name}: "));
+        // bar.set_style(ProgressStyle::with_template("{prefix} [{elapsed_precise}]").unwrap());
+        self.bar = Some(bar);
     }
-    /**
-     * pauses the timer
-     */
-    // pub fn pause(&self) {
-    // transmits a pause message
-    // self.tx.as_ref().unwrap().send(Action::Puase).unwrap();
-    // }
-    /**
-     * resumes the timer
-     */
-    // pub fn resume(&self) {
-    // transmits a resume message
-    // self.tx.as_ref().unwrap().send(Action::Resume).unwrap();
-    // }
-    /***
-     * notifies the user that a period is elapsed
-     */
-    fn notify(&self) {
-        let msg = match self.next {
-            Period::Session => "Session has ended!",
-            Period::Pause => "Break has ended!",
+
+    fn remove_bar(&mut self) -> () {
+        let bar = self
+            .bar
+            .as_ref()
+            .expect("couldn't get ref for self.bar, before finishing it");
+        bar.finish();
+        self.bar = None;
+    }
+
+    fn notify(&self) -> () {
+        let ended_interval = match self.next_interval {
+            Interval::Session => "Pause",
+            Interval::Pause => "Session",
         };
+        let msg = format!("{ended_interval} has ended!");
         Notification::new()
             .summary("Pomodoro")
-            .body(msg)
+            .body(&msg)
             .sound_name("alarm-clock-elapsed")
             .show()
             .expect("showing notification error!");
+    }
+
+    pub fn run(&mut self) -> () {
+        if self.bar.is_none() {
+            self.create_bar();
+        }
+
+        let bar = self.bar.as_ref().expect("couldn't get ref for self.bar");
+        let initial_position = bar.position();
+        let length = bar.length().expect("bar doesn't have length!!!");
+
+        println!(
+            "position = {}, length = {length}, finished = {}",
+            bar.position(),
+            bar.is_finished(),
+        );
+
+        for _ in initial_position..length {
+            match self.rx.try_recv() {
+                Ok(received) => match received {
+                    Actions::Puase => {
+                        self.pause();
+                    }
+                    Actions::Resume => {}
+                },
+                Err(_) => {}
+            };
+
+            thread::sleep(Duration::from_secs(1));
+            bar.inc(1);
+        }
+        self.notify();
+        self.remove_bar();
+    }
+
+    fn pause(&self) -> () {
+        match self.rx.recv() {
+            Ok(received) => match received {
+                Actions::Resume => return,
+                Actions::Puase => {}
+            },
+            Err(_) => {}
+        }
     }
 }
