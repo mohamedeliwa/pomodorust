@@ -12,6 +12,7 @@ enum Interval {
 pub enum Actions {
     Puase,
     Resume,
+    Exit,
 }
 
 #[derive(Debug)]
@@ -82,19 +83,31 @@ impl Pomodoro {
         let initial_position = bar.position();
         let length = bar.length().expect("bar doesn't have length!!!");
 
-        println!(
-            "position = {}, length = {length}, finished = {}",
-            bar.position(),
-            bar.is_finished(),
-        );
+        // println!(
+        //     "position = {}, length = {length}, finished = {}",
+        //     bar.position(),
+        //     bar.is_finished(),
+        // );
 
         for _ in initial_position..length {
             match self.rx.try_recv() {
                 Ok(received) => match received {
+                    // calling pause and waiting till user sends another action
                     Actions::Puase => {
-                        self.pause();
+                        let next_action = self.pause();
+                        match next_action {
+                            // exiting if user sends exit action while the app is paused
+                            Actions::Exit => {
+                                return;
+                            }
+                            _ => {}
+                        }
                     }
-                    Actions::Resume => {}
+                    // exiting
+                    Actions::Exit => {
+                        return;
+                    }
+                    _ => {}
                 },
                 Err(_) => {}
             };
@@ -106,13 +119,14 @@ impl Pomodoro {
         self.remove_bar();
     }
 
-    fn pause(&self) -> () {
+    /**
+     * it pauses the thread execution till it receieves another user action
+     * then returns the received action to the caller
+     */
+    fn pause(&self) -> Actions {
         match self.rx.recv() {
-            Ok(received) => match received {
-                Actions::Resume => return,
-                Actions::Puase => {}
-            },
-            Err(_) => {}
+            Ok(received) => return received,
+            Err(_) => Actions::Exit,
         }
     }
 }

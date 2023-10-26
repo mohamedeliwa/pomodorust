@@ -5,9 +5,9 @@ use std::{
 
 use console::{Key, Term};
 
-use crate::pomodoro::Actions;
+use crate::{pomodoro::Actions, MainActions};
 
-pub fn run(tx: Sender<Actions>) -> JoinHandle<()> {
+pub fn run(pomodoro_tx: Sender<Actions>, main_tx: Sender<MainActions>) -> JoinHandle<()> {
     thread::spawn(move || {
         let mut paused: bool = false;
         loop {
@@ -16,17 +16,27 @@ pub fn run(tx: Sender<Actions>) -> JoinHandle<()> {
                 // capturing clicking space key, for pausing and resuming
                 Key::Char(' ') => {
                     if paused {
-                        tx.send(Actions::Resume)
+                        pomodoro_tx
+                            .send(Actions::Resume)
                             .expect("failed to send pause action msg!");
                         paused = false;
                     } else {
-                        tx.send(Actions::Puase)
+                        pomodoro_tx
+                            .send(Actions::Puase)
                             .expect("failed to send pause action msg!");
                         paused = true;
                     }
                 }
                 // capturing q char for quitting the program
-                // Key::Char('q') => return,
+                Key::Char('q') => {
+                    pomodoro_tx
+                        .send(Actions::Exit)
+                        .expect("failed to send exit pomodoro action msg!");
+                    main_tx
+                        .send(MainActions::Exit)
+                        .expect("failed to send exit action msg!");
+                    return;
+                }
                 // skipping any other key
                 _ => {}
             }
