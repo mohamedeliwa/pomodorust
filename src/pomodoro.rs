@@ -35,6 +35,9 @@ impl Pomodoro {
         }
     }
 
+    /**
+     * creates a new progress and adds it to the struct
+     */
     fn create_bar(&mut self) -> () {
         let (name, length) = match self.next_interval {
             Interval::Session => {
@@ -51,6 +54,11 @@ impl Pomodoro {
         self.bar = Some(bar);
     }
 
+    /**
+     * removes a progress bar from the struct
+     * leaving None in place
+     * marking it as finished 
+     */
     fn remove_bar(&mut self) -> () {
         let bar = self
             .bar
@@ -60,6 +68,9 @@ impl Pomodoro {
         self.bar = None;
     }
 
+    /**
+     * shows desktop notification when an interval is finished 
+     */
     fn notify(&self) -> () {
         let ended_interval = match self.next_interval {
             Interval::Session => "Pause",
@@ -74,6 +85,9 @@ impl Pomodoro {
             .expect("showing notification error!");
     }
 
+    /**
+     * runs the logic to progress the progress bar
+     */
     pub fn run(&mut self) -> () {
         if self.bar.is_none() {
             self.create_bar();
@@ -98,6 +112,7 @@ impl Pomodoro {
                         match next_action {
                             // exiting if user sends exit action while the app is paused
                             Actions::Exit => {
+                                self.remove_bar();
                                 return;
                             }
                             _ => {}
@@ -105,6 +120,7 @@ impl Pomodoro {
                     }
                     // exiting
                     Actions::Exit => {
+                        self.remove_bar();
                         return;
                     }
                     _ => {}

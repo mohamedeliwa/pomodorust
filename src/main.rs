@@ -1,5 +1,5 @@
 use clap::Parser;
-// use dialoguer;
+use console::style;
 use std::sync::mpsc;
 mod key_handler;
 mod pomodoro;
@@ -29,6 +29,10 @@ fn main() {
     let pomodoro = Args::parse();
     let mut pomodoro = Pomodoro::new(pomodoro.session, pomodoro.pause, pomodoro_rx);
 
+    // printing some how-to-use info for the user
+    println!("\nPress {} to pause/resume", style("<Space>").cyan());
+    println!("Press {} to quit!\n", style('q').cyan());
+    
     loop {
         match main_rx.try_recv() {
             Ok(received) => match received {
@@ -39,4 +43,5 @@ fn main() {
         pomodoro.run();
     }
     key_handle.join().expect("failed to join key_handler!");
+    println!("\n\nThanks for using {}!\n", style("Pomodorust").green());
 }
