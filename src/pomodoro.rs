@@ -47,7 +47,7 @@ impl Pomodoro {
             }
         };
         let bar = ProgressBar::new(length).with_prefix(format!("{name}: "));
-        // bar.set_style(ProgressStyle::with_template("{prefix} [{elapsed_precise}]").unwrap());
+        bar.set_style(ProgressStyle::with_template("\n{prefix:.yellow}: {percent:.cyan/blue}% is completed.\n{wide_bar}").unwrap());
         self.bar = Some(bar);
     }
 
