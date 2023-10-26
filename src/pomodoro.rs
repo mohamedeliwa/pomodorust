@@ -49,15 +49,20 @@ impl Pomodoro {
                 ("Pause", self.pause_length * 60)
             }
         };
-        let bar = ProgressBar::new(length).with_prefix(format!("{name}: "));
-        bar.set_style(ProgressStyle::with_template("\n{prefix:.yellow}: {percent:.cyan/blue}% is completed.\n{wide_bar}").unwrap());
+        let bar = ProgressBar::new(length).with_prefix(name);
+        bar.set_style(
+            ProgressStyle::with_template(
+                "\n{prefix:.yellow}: {percent:.cyan/blue}% is completed.\n{wide_bar}",
+            )
+            .unwrap(),
+        );
         self.bar = Some(bar);
     }
 
     /**
      * removes a progress bar from the struct
      * leaving None in place
-     * marking it as finished 
+     * marking it as finished
      */
     fn remove_bar(&mut self) -> () {
         let bar = self
@@ -69,7 +74,7 @@ impl Pomodoro {
     }
 
     /**
-     * shows desktop notification when an interval is finished 
+     * shows desktop notification when an interval is finished
      */
     fn notify(&self) -> () {
         let ended_interval = match self.next_interval {
@@ -77,12 +82,21 @@ impl Pomodoro {
             Interval::Pause => "Session",
         };
         let msg = format!("{ended_interval} has ended!");
-        Notification::new()
-            .summary("Pomodoro")
-            .body(&msg)
-            .sound_name("alarm-clock-elapsed")
-            .show()
-            .expect("showing notification error!");
+        let mut notification = Notification::new();
+        notification.summary("Pomodoro").body(&msg);
+
+        // adding support for notifications' sound in non windows systems 
+        #[cfg(not(target_os = "windows"))]
+        {
+            notification.sound_name("alarm-clock-elapsed");
+        }
+   
+        // adding support to notifications sound in windows
+        #[cfg(target_os = "windows")]
+        {
+            notification.sound_name("Default");
+        }
+        notification.show().expect("showing notification error!");
     }
 
     /**
