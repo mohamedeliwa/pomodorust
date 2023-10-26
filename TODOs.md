@@ -3,9 +3,9 @@
 - [x] make the counter output a digital timer that counts down
 - [x] add the feature to pause/resume the timer 
 - [ ] work on the style of the bar 
-    - [ ] show up the current interval name `in progress...`
-    - [ ] show up the state if it's paused or not
-    - [ ] convert the length indicator to percentage or anything human friendly other than seconds 
+    - [x] show up the current interval name 
+    - [x] convert the length indicator to percentage or anything human friendly other than seconds 
 - [x] make the app run inifite cycles of sessions and breaks until the user stops/pauses it. 
 - [x] make the pomodoro struct has its own impl of the runner function, and keeps track of what should run next \n
       the session or the break
+- [ ] add support to notification sounds on windows `in progress...`
