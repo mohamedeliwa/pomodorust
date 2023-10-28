@@ -1,13 +1,12 @@
 use clap::Parser;
-use notify_rust::{Hint, Notification};
-use std::{
-    io::{self, Write},
-    println, thread,
-    time::Duration,
-};
+use console::style;
+use std::sync::mpsc;
+mod key_handler;
+mod pomodoro;
+use pomodoro::{Actions, Pomodoro};
 
 #[derive(Parser, Debug)]
-struct Pomodoro {
+struct Args {
     /// How many minutes in a session
     #[arg(short, long, default_value_t = 1)]
     session: u64,
@@ -16,68 +15,33 @@ struct Pomodoro {
     pause: u64,
 }
 
+pub enum MainActions {
+    Exit,
+}
+
 fn main() {
-    let pomodoro = Pomodoro::parse();
+    // channel to send messages to the pomodoro struct
+    let (pomodoro_tx, pomodoro_rx) = mpsc::channel::<Actions>();
+    // channel to send message to the main function
+    let (main_tx, main_rx) = mpsc::channel::<MainActions>();
+    // running the key_kanlder in a separate thread
+    let key_handle = key_handler::run(pomodoro_tx, main_tx);
+    let pomodoro = Args::parse();
+    let mut pomodoro = Pomodoro::new(pomodoro.session, pomodoro.pause, pomodoro_rx);
 
-    println!("Start session ? (yes = y, no = n)\n");
-    let answer = bool_answer_formatter();
-    if !answer {
-        return;
-    };
-    runner(pomodoro.session);
-    Notification::new()
-        .summary("Pomodoro")
-        .body("Session has ended!")
-        .hint(Hint::SoundName(String::from("alarm-clock-elapsed")))
-        .show()
-        .expect("showing notification error!");
-    println!("Start break ? (yes = y, no = n)\n");
-    let answer = bool_answer_formatter();
-    if !answer {
-        return;
-    };
-    runner(pomodoro.pause);
-    Notification::new()
-        .summary("Pomodoro")
-        .body("Break has ended!")
-        .hint(Hint::SoundName(String::from("alarm-clock-elapsed")))
-        .show()
-        .expect("showing notification error!");
-}
-
-/**
-* formats user's answer for yes or no questions
-*/
-fn bool_answer_formatter() -> bool {
-    let mut answer = String::new();
-    let yes = String::from("y\n");
-    io::stdin().read_line(&mut answer).unwrap();
-    if answer == yes {
-        true
-    } else {
-        false
-    }
-}
-
-/**
-* runs a specific period of minutes
-* prints passed time indicators to stdout
-*/
-fn runner(minutes: u64) {
-    let seconds = minutes * 60;
-    let thread_join_handle = thread::spawn(move || {
-        for i in 1..(seconds + 1) {
-            thread::sleep(Duration::from_secs(1));
-            if i % 60 == 0 {
-                print!("{i}\n");
-            } else if i % 10 == 0 {
-                print!("{i}");
-            } else if i % 2 == 0 {
-                print!(".");
-            }
-            io::stdout().flush().unwrap();
+    // printing some how-to-use info for the user
+    println!("\nPress {} to pause/resume", style("<Space>").cyan());
+    println!("Press {} to quit!\n", style('q').cyan());
+    
+    loop {
+        match main_rx.try_recv() {
+            Ok(received) => match received {
+                MainActions::Exit => break,
+            },
+            Err(_) => {}
         }
-    });
-    thread::sleep(Duration::from_secs(seconds));
-    let _res = thread_join_handle.join();
+        pomodoro.run();
+    }
+    key_handle.join().expect("failed to join key_handler!");
+    println!("\n\nThanks for using {}!\n", style("Pomodorust").green());
 }
