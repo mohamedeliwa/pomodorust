@@ -8,10 +8,10 @@ use pomodoro::{Actions, Pomodoro};
 #[derive(Parser, Debug)]
 struct Args {
     /// How many minutes in a session
-    #[arg(short, long, default_value_t = 1)]
+    #[arg(short, long, default_value_t = 25)]
     session: u64,
     /// How many minutes in a break
-    #[arg(short, long, default_value_t = 1)]
+    #[arg(short, long, default_value_t = 5)]
     pause: u64,
 }
 
